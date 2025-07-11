@@ -173,3 +173,43 @@ void lock_test()
 	t1.join();
 	t2.join();
 }
+
+
+
+
+void
+task3(string_t _value)
+{
+	for (int i = 0; i < _value.size; ++i)
+	{
+		try
+		{
+			std::lock_guard<mutex_t> guard(global_critical.mutex());
+			u8 letter = (u8)(STRING_CONTENT(_value))[i];
+			printf("%c \n", letter);
+			printf("Waiting 100ms \n");
+			
+			throw std::exception("LOL");
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			printf("finished --> unlocking mutex with std::guard \n");
+		}
+		catch(std::exception const& e)
+		{
+			printf("Exception --> %s \n", e.what());
+		}
+	}
+}
+
+void
+lock_guard_test()
+{
+	SCRATCH();
+	
+	string_t string = STRING_V(temp_arena, "Hello");
+	
+	thread_t t(task3, string);
+	
+	thread_t t1(task3, string);
+	t.join();
+	t1.join();
+}
