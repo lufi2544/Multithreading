@@ -213,3 +213,76 @@ lock_guard_test()
 	t.join();
 	t1.join();
 }
+
+void
+task4(string_t _value)
+{
+	for (int i = 0; i < _value.size; ++i)
+	{
+		
+		std::unique_lock<std::mutex> u_lock(global_critical.mutex());
+		u8 letter = (u8)(STRING_CONTENT(_value))[i];
+		printf("%c \n", letter);
+		
+		u_lock.unlock();
+		printf("finished --> unlocking mutex with std::guard \n");
+		printf("Waiting 100ms \n");
+		
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		printf("finished waiting \n");
+		
+	}
+}
+
+void
+unique_lock_test()
+{
+	SCRATCH();
+	
+	string_t string = STRING_V(temp_arena, "Hello");	
+	
+	thread_t t(task4, string);	
+	thread_t t1(task4, string);
+	t.join();
+	t1.join();
+}
+
+static int a = 100;
+
+std::timed_mutex t_mutex;
+void 
+task5()
+{	
+	int locking = 2;
+	std::unique_lock<std::timed_mutex> u_lock(t_mutex, std::chrono::milliseconds(locking));
+	if(u_lock.owns_lock())
+	{
+		
+	
+	printf("locking for %i ms \n", locking);
+	a--;
+	printf("a Value: %i \n", a);
+	
+	int sleep_f = 2000;
+	printf("sleeping for %i ms \n", sleep_f);
+	std::this_thread::sleep_for(std::chrono::milliseconds(sleep_f));
+		printf("finished waiting \n");
+	}
+	else
+	{
+		printf("not owned the lock \n");
+	}
+}
+
+void custom_test()
+{
+	printf("pepe1 executing \n");
+	THREAD(pepe, task5);	
+	
+	printf("pepe2 executing \n");
+	THREAD(pepe2, task5);	
+	t_pepe.join();	
+	
+	//std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	t_pepe2.join();	
+}

@@ -26,7 +26,7 @@ int main(int num, char** args)
 	print_string_test(string_1, string_2, string_3);
 */
 	
-	lock_guard_test();
+	custom_test();
 	
 	return 0;
 }
@@ -42,4 +42,18 @@ Also when handling an exception and handling right away there, and the destructo
 A cool feature to the std::lock_guard, would be to be able to unlock the mutex, so we know that at certain point another thread can enter 
 the critical section, and as it is going to be protected, then we are fine and no data races are expected to happen.
 
+
+// DAY 5
+
+std::unque_lock ----
+
+In this case it has the same behavior as the std::lock_guard, but in this case it has a function "unlock" that will let other threads access the critical section after execution, if not called unlock, the destructor will also try to call it.
+
+
+ We can use this over the lock guard, when we want to execute code within a scope or having extra features for the locking/unlocking.
+
+I have tested the unique_lock with a timed_mutex, in this case, it can fail, so for this case, we have to test it with ::owns_lock, in the 
+critical section, as we may don't have acquiere the lock and still execute the code.
+
 */
+
