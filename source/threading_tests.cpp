@@ -274,15 +274,60 @@ task5()
 	}
 }
 
-void custom_test()
+void
+custom_test()
 {
 	printf("pepe1 executing \n");
 	THREAD(pepe, task5);	
 	
 	printf("pepe2 executing \n");
 	THREAD(pepe2, task5);	
-	t_pepe.join();	
+	pepe.join();	
 	
 	//std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	t_pepe2.join();	
+	pepe2.join();	
+}
+
+using namespace std::chrono;
+
+std::timed_mutex this_mutex;
+
+void timeouts_1()
+{
+	printf("task 1 \n");
+	
+	printf("locking mutex \n");
+	this_mutex.lock();
+	std::this_thread::sleep_for(std::chrono::seconds(3));
+	
+	this_mutex.unlock();
+}
+
+void timeouts_2()
+{
+	printf("task 2 \n");
+	
+	auto deadline = system_clock::now() + seconds(10);
+	
+	std::unique_lock<std::timed_mutex> this_lock(this_mutex, std::defer_lock);
+	
+	if(!this_lock.try_lock_for(seconds(10)))
+	{
+		printf("mutex can not be locked yet. \n");
+	}
+	
+	printf("mutex acquired and unlocked \n");
+}
+
+void 
+timeouts_test()
+{
+	THREAD(pepe1, timeouts_1);
+	THREAD(pepe2, timeouts_2);
+	
+	
+	pepe1.join(); 
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	pepe2.join();
+	
 }
