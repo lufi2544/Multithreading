@@ -331,3 +331,55 @@ timeouts_test()
 	pepe2.join();
 	
 }
+
+#include <vector>
+critical_section_t critical_read_write;
+std::shared_mutex smutex;
+
+string_t write_read_string;
+
+void 
+task_read()
+{
+	//critical_read_write.lock();
+	std::shared_lock<std::shared_mutex> shared_section(smutex);
+	
+	printf("printing AA BB CC AA BB CC AA BB CC -> %s \n", STRING_CONTENT(write_read_string));
+	
+	std::this_thread::sleep_for(milliseconds(100));
+	//critical_read_write.unlock();
+}
+
+void
+task_write(arena_t *_arena, const char *_content)
+{
+	std::lock_guard<std::shared_mutex> guard(smutex);
+	write_read_string = STRING_V(_arena, _content);
+	
+}
+
+void
+writer_read()
+{
+	SCRATCH();
+	write_read_string = STRING_VL(temp_arena, 20, "Rome");
+	std::vector<thread_t> workers;
+	for(int i = 0; i < 20; ++i)
+	{
+		workers.push_back(thread_t(task_read));
+	}
+	
+	workers.push_back(thread_t(task_write, temp_arena, "Madrid"));
+	workers.push_back(thread_t(task_write, temp_arena, "Barcelona"));
+	
+	for(int i = 0; i < 20; ++i)
+	{
+		workers.push_back(thread_t(task_read));
+	}
+	
+	for(auto& w: workers)
+	{
+		w.join();
+	}
+	
+}

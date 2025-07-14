@@ -26,7 +26,7 @@ int main(int num, char** args)
 	print_string_test(string_1, string_2, string_3);
 */
 	
-	timeouts_test();
+	writer_read();
 	
 	return 0;
 }
@@ -78,6 +78,32 @@ unque_lock
 - note about the try_lock_for() - this internally seems to have a while_loop, so we can test the result against a if statemenet, but the 
 thing is that also a while loop can be tested for x amount of time, but making sure that the mutex can be aquired at some point, if not, 
 the thread will be blocked forever.
+
+
+
+// DAY 7
+
+- using the shared_lock wrapper around the std::mutex today. 
+
+std::shared_lock is basically a wrapper that locks a mutex, but allows other threads to access the same critical section, this is a READ 
+wrapper.
+
+On the other hand, if we take a look at the WRITER wrapper around mutex, like lock_guard, this is exclusive critical section.
+
+NOTE:: if we have a shared_lock that will work with the SharedTimedLockable requirements, like std::shared_mutex, have in mind that for the 
+reader threads, they will be able to read the data concurrently among readeres but just if no writer threads have an exclusive lock, this can cause that if we write and then write again and then read, we lost a data change there, but is fine, as we are doing this concurrently for a reason and for the prupose of executing all at the same time.
+
+Even though we have different critical sections, the mutex is the same, so if exlusive locked, then no other thread can access a critical section where the mutex is present until the current locked thread is unlocked.
+
+
+CONS:
+- Takes more memory than std::mutex.
+- Slower than std::thread.
+
+PROS:
+- Great in situations where reader threads number are greater than the writer threads.
+
+
 
 
 */
