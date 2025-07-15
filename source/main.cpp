@@ -104,6 +104,27 @@ PROS:
 - Great in situations where reader threads number are greater than the writer threads.
 
 
+// DAY 8
+
+- Introduction to thread_local and static variables in multithreading:
+
+    - The static variable is initialized when the program starts the execution, so in this case the threads can access the thread, but if it is a pointer and lacks any type of protection, then multiple threads can access it and can create multiple objects with different memory addresses.
+    - On the other hand we have static variables that are not pointers, just variables, which in this case, this is thread safe, since it is created when the program first starts, so the threads are updaeted with it.
+
+
+- Thread_local, LIMITED TO A LIFETIME OF A THREAD. In this case we can use the thread_local type for a varibale, so any thread that access it, will initialize, and it will be destroyed on the thread being destroyed.
+
+
+
+Double checked locking
+- I think is for cases where 2 threads acces the same function and try to init a variable, and then enter at the same time, but just one of those
+will init the variable, so when init, it unlocks the mutex and the other one will do the same thing, so what we have to do is after locking the mutex, just do another check for init, that is why it is called double checked lock.
+
+
+
+
+
+
 
 
 */
