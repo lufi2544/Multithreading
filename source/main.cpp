@@ -126,5 +126,9 @@ Different cases for the double check locking.
 - T_A and T_B test validity of the singleton, not valid, then one of those locks the mutex, construct the singleton, then unlocks it, and T_B does the 
 same thing, so we have to add another check after the mutex adquisition.
 
+*** NOTE***: we can avoid this race condition by compiling in c++ or later, since the compiler guarentees to construct the object before assigning the addresss.(before is populated? not sure), I imagine that internally the alocator wont return until the object is constructed.
+With previous versions the compiler can optimize the assignment of the instructions order.
+
+
 */
 
