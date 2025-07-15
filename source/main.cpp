@@ -26,7 +26,7 @@ int main(int num, char** args)
 	print_string_test(string_1, string_2, string_3);
 */
 	
-	writer_read();
+	double_checked();
 	
 	return 0;
 }
@@ -121,11 +121,10 @@ Double checked locking
 will init the variable, so when init, it unlocks the mutex and the other one will do the same thing, so what we have to do is after locking the mutex, just do another check for init, that is why it is called double checked lock.
 
 
-
-
-
-
-
+Different cases for the double check locking. 
+- T_A allocates memory but does not construct the object, so T_B check is valid, but then uses it and leads to undefined behavior.
+- T_A and T_B test validity of the singleton, not valid, then one of those locks the mutex, construct the singleton, then unlocks it, and T_B does the 
+same thing, so we have to add another check after the mutex adquisition.
 
 */
 

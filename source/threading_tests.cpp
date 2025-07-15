@@ -383,3 +383,94 @@ writer_read()
 	}
 	
 }
+
+mutex_t singleton_mutex;
+
+struct singleton
+{
+	singleton()
+	{
+		std::cout << "INIT" << std::endl;
+		std::cout << "............" << std::endl;
+		std::cout << "............" << std::endl;
+		std::cout << "............" << std::endl;
+		std::cout << "............" << std::endl;
+		std::cout << "............" << std::endl;
+		std::cout << "END" << std::endl;
+	}
+	singleton(singleton const&) = delete;
+	singleton& operator = (singleton const&) = delete;
+	
+	static singleton* member;
+	
+	static singleton* get()
+	{
+		if(member == nullptr)
+		{
+			std::unique_lock<mutex_t> lock(singleton_mutex);			
+			if(member == nullptr)
+			{
+				//NOTE: Double check locking here, since one thread can lock the mutex, and other thread is right at the if statement, then it will lock 
+				// the mutex when available.
+				
+				// Thread A could have allocated the memory, so the memory location is not null, but not constructed yet, we use the data --> Undefined Behavior.
+				// If we are not in c++ 17 we can use the std::call_once that ensures that a function is just calles once.
+				
+				
+				// Thread A and B can both return false from checking the singleton memory.
+				static singleton this_singleton;
+				return &this_singleton;
+			}
+		}
+		
+		return member;
+		//return &s;
+	}
+	
+		
+	u32 data = 0;
+};
+
+singleton* singleton::member = nullptr;
+//thread_lcoal singleton* member = nullptr; // unique per thread, not shared.
+
+
+void 
+init_singleton()
+{	
+	
+	/*if(member == nullptr)
+	{
+		member = new singleton();
+	} thread_local version. */
+	
+	singleton* member = singleton::get();
+	
+	printf("Address: %p \n", member);			
+	
+}
+
+void 
+double_checked()
+{
+	std::vector<thread_t> workers;
+	
+	for(int i = 0; i < 30; ++i)
+	{
+		workers.push_back(thread_t(init_singleton));
+	}
+	
+	
+	for(auto& a : workers)
+	{
+		a.join();
+	}
+	
+}
+
+
+
+
+
+
+
