@@ -385,6 +385,7 @@ writer_read()
 }
 
 mutex_t singleton_mutex;
+std::once_flag o_flag;
 
 struct singleton
 {
@@ -403,13 +404,18 @@ struct singleton
 	
 	static singleton* member;
 	
+	
+	static void create()
+	{
+		member = new singleton();
+	}
+	
 	static singleton* get()
 	{
 		if(member == nullptr)
 		{
-			std::unique_lock<mutex_t> lock(singleton_mutex);			
-			if(member == nullptr)
-			{
+			//std::unique_lock<mutex_t> lock(singleton_mutex);			
+
 				//NOTE: Double check locking here, since one thread can lock the mutex, and other thread is right at the if statement, then it will lock 
 				// the mutex when available.
 				
@@ -418,9 +424,10 @@ struct singleton
 				
 				
 				// Thread A and B can both return false from checking the singleton memory.
-				static singleton this_singleton;
-				return &this_singleton;
-			}
+				//singleton this_singleton;
+				//return &this_singleton;
+				
+				std::call_once(o_flag, [](){ singleton::create(); });
 		}
 		
 		return member;
@@ -467,10 +474,3 @@ double_checked()
 	}
 	
 }
-
-
-
-
-
-
-

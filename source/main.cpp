@@ -129,6 +129,48 @@ same thing, so we have to add another check after the mutex adquisition.
 *** NOTE***: we can avoid this race condition by compiling in c++ or later, since the compiler guarentees to construct the object before assigning the addresss.(before is populated? not sure), I imagine that internally the alocator wont return until the object is constructed.
 With previous versions the compiler can optimize the assignment of the instructions order.
 
+Call Once Idiom
+
+- In this case we use the call_once with the once_flag, to call just once a function or critical section, in this case we can pass a lambda to the call_once.
+
+
+
+DAY 9
+
+Deadlocks:
+
+- This can happen when 2 threads try to lock the same mutex but they will for ever waiting, since thread A has the mutex locked and is waiting to lock another mutex that 
+thread B has. And so on.
+
+TA
+- M1
+Sleep
+- M2
+Sleep
+
+TB
+- M2
+Sleep
+- M1
+Sleep
+
+In this case the mutex will deadlock for ever.
+To solve this, we can lock the mutex in the same order.
+
+TA
+- M1
+Sleep
+- M2
+Sleep
+
+TB
+- M1
+Sleep
+- M2
+Sleep
+
+In this case these threads can run concurrently.
+
 
 */
 
