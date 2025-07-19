@@ -474,3 +474,133 @@ double_checked()
 	}
 	
 }
+
+
+
+/////////////////////////////////////////
+/// PHILOSOPHERS PROBLEM 
+///
+
+/*
+ 5 philosophers and 5 forks but they have to eat with 2 forks at a time.
+*/
+
+
+global const u8 philosophers_num = 5;
+global const u8 forks = philosophers_num;
+global const char* philosophers[philosophers_num] = 
+{
+	"A",  
+	"B",  
+	"C",  
+	"D",  
+	"E"  
+};
+
+
+global bool philosopher_states[philosophers_num] = 
+{
+	false,
+	false,
+	false,
+	false,
+	false
+};
+
+// Each fork has a mutex associated, since of course a philosopher an pick up the both forks at a time.
+mutex_t fork_mutex[philosophers_num];
+
+
+const auto eating_time = seconds(1);
+const auto thinking_time = seconds(2);
+
+mutex_t p_mutex;
+void change_pilosopher_state(u8 index, bool bState)
+{
+	std::lock_guard<mutex_t> lock(p_mutex);
+	
+	philosopher_states[index] = bState;
+}
+
+void try_eat(u8 index)
+{
+	const char* name = philosophers[index];
+	
+	// try pickup fork
+	mutex_t* left_mutex = &fork_mutex[index];	
+	mutex_t* right_mutex = &fork_mutex[(index + 1) % forks];	
+	
+	printf("%s Thinking ... \n", name);
+	std::this_thread::sleep_for(thinking_time);
+	
+	
+	while(!left_mutex->try_lock())
+	{
+		printf("Fork %i still not available. %s waiting... \n", index, name);
+		std::this_thread::sleep_for(milliseconds(100));
+	}
+	
+	printf("%s Taking Left Fork %i  \n", name, index);
+	
+	printf("%s Thinking ... \n", name);
+	std::this_thread::sleep_for(thinking_time);
+	
+	
+	while(!right_mutex->try_lock())
+	{			
+		printf("Fork %i still no t available %s waiting... \n", index + 1, name);
+		std::this_thread::sleep_for(milliseconds(100));
+	}
+	
+	right_mutex->lock();
+	
+	printf("%s Taking Right Fork %i \n", name, index + 1);
+	
+	
+	printf("Philosopher %s eating ... \n", name);	
+	std::this_thread::sleep_for(eating_time);
+	
+	printf("Philosopher %s finished eating, realising forks %i, %i thinking now ... \n", name, index, index + 1);
+	std::this_thread::sleep_for(thinking_time);
+	
+	right_mutex->unlock();
+	left_mutex->unlock();
+	
+	change_pilosopher_state(index, true);
+}
+
+void try_pickup_fork(u8 index)
+{
+	
+}
+
+
+void philosophers_test()
+{
+	std::vector<thread_t> philosophers;
+	for(int i = 0; i < philosophers_num; ++i)
+	{
+		philosophers.push_back(thread_t(try_eat, i));
+	}
+	
+	for(auto& p: philosophers)
+	{
+		p.join();
+	}
+	
+	for(int i = 0; i < philosophers_num; ++i)
+	{
+		bool state = philosopher_states[i];
+		printf(" Philosopher state %s \n", state ? "true" : "false");
+	}
+	
+	
+}
+
+
+
+
+
+
+
+

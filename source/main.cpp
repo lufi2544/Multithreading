@@ -26,7 +26,7 @@ int main(int num, char** args)
 	print_string_test(string_1, string_2, string_3);
 */
 	
-	double_checked();
+	philosophers_test();
 	
 	return 0;
 }
@@ -135,7 +135,7 @@ Call Once Idiom
 
 
 
-DAY 9
+//// DAY 9
 
 Deadlocks:
 
@@ -170,6 +170,11 @@ Sleep
 Sleep
 
 In this case these threads can run concurrently.
+
+
+///DAY 10
+
+
 
 
 */
