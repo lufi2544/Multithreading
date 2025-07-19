@@ -18,7 +18,7 @@ Print()
 {
 	try
 	{
-		throw std::exception("Ouuu");
+		throw std::runtime_error("Ouuu");
 		printf("Hello World \n");
 	}
 	catch(std::exception const& e)
@@ -27,15 +27,15 @@ Print()
 	}
 }
 
-global thread_t
+global mthread_t
 Create()
 {	
-	return thread_t(&Print);
+	return mthread_t(&Print);
 }
 
 global void ids_test()
 {
-	thread_t thread = Create();
+	mthread_t thread = Create();
 	std::cout << "Thread ID:" << thread.get_id() << std::endl;	
 	thread.join();
 	
@@ -55,7 +55,7 @@ Hello_Detach()
 global_f void 
 detach_test()
 {
-	thread_t t(&Hello_Detach);
+	mthread_t t(&Hello_Detach);
 	t.detach();	
 	std::this_thread::sleep_for(std::chrono::seconds(5));
 	printf("Detach_Test_Finished \n");
@@ -110,9 +110,9 @@ string_test_mutex(string_t string)
 
 void print_string_test(string_t _a, string_t _b, string_t _c)
 {
-	thread_t t1(string_test_mutex, _a);
-	thread_t t2(string_test_mutex, _b);
-	thread_t t3(string_test_mutex, _c);
+	mthread_t t1(string_test_mutex, _a);
+	mthread_t t2(string_test_mutex, _b);
+	mthread_t t3(string_test_mutex, _c);
 	
 	t1.join();
 	t2.join();
@@ -124,13 +124,13 @@ global_f void
 access_test()
 {
 	{
-		thread_t t1(&inc_counter);
+		mthread_t t1(&inc_counter);
 		thread_guard_t tg1(Move(t1));
 		
-		thread_t t2(&inc_counter);
+		mthread_t t2(&inc_counter);
 		thread_guard_t tg2(Move(t2));
 		
-		thread_t t3(&inc_counter);
+		mthread_t t3(&inc_counter);
 		thread_guard_t tg3(Move(t3));
 	}
 	
@@ -167,8 +167,8 @@ void task2()
 
 void lock_test()
 {
-	thread_t t1(task1);
-	thread_t t2(task2);
+	mthread_t t1(task1);
+	mthread_t t2(task2);
 	
 	t1.join();
 	t2.join();
@@ -189,7 +189,7 @@ task3(string_t _value)
 			printf("%c \n", letter);
 			printf("Waiting 100ms \n");
 			
-			throw std::exception("LOL");
+			throw std::runtime_error("LOL");
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			printf("finished --> unlocking mutex with std::guard \n");
 		}
@@ -207,9 +207,9 @@ lock_guard_test()
 	
 	string_t string = STRING_V(temp_arena, "Hello");
 	
-	thread_t t(task3, string);
+	mthread_t t(task3, string);
 	
-	thread_t t1(task3, string);
+	mthread_t t1(task3, string);
 	t.join();
 	t1.join();
 }
@@ -241,8 +241,8 @@ unique_lock_test()
 	
 	string_t string = STRING_V(temp_arena, "Hello");	
 	
-	thread_t t(task4, string);	
-	thread_t t1(task4, string);
+	mthread_t t(task4, string);	
+	mthread_t t1(task4, string);
 	t.join();
 	t1.join();
 }
@@ -258,14 +258,14 @@ task5()
 	if(u_lock.owns_lock())
 	{
 		
-	
-	printf("locking for %i ms \n", locking);
-	a--;
-	printf("a Value: %i \n", a);
-	
-	int sleep_f = 2000;
-	printf("sleeping for %i ms \n", sleep_f);
-	std::this_thread::sleep_for(std::chrono::milliseconds(sleep_f));
+        
+        printf("locking for %i ms \n", locking);
+        a--;
+        printf("a Value: %i \n", a);
+        
+        int sleep_f = 2000;
+        printf("sleeping for %i ms \n", sleep_f);
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_f));
 		printf("finished waiting \n");
 	}
 	else
@@ -363,18 +363,18 @@ writer_read()
 {
 	SCRATCH();
 	write_read_string = STRING_VL(temp_arena, 20, "Rome");
-	std::vector<thread_t> workers;
+	std::vector<mthread_t> workers;
 	for(int i = 0; i < 20; ++i)
 	{
-		workers.push_back(thread_t(task_read));
+		workers.push_back(mthread_t(task_read));
 	}
 	
-	workers.push_back(thread_t(task_write, temp_arena, "Madrid"));
-	workers.push_back(thread_t(task_write, temp_arena, "Barcelona"));
+	workers.push_back(mthread_t(task_write, temp_arena, "Madrid"));
+	workers.push_back(mthread_t(task_write, temp_arena, "Barcelona"));
 	
 	for(int i = 0; i < 20; ++i)
 	{
-		workers.push_back(thread_t(task_read));
+		workers.push_back(mthread_t(task_read));
 	}
 	
 	for(auto& w: workers)
@@ -415,26 +415,26 @@ struct singleton
 		if(member == nullptr)
 		{
 			//std::unique_lock<mutex_t> lock(singleton_mutex);			
-
-				//NOTE: Double check locking here, since one thread can lock the mutex, and other thread is right at the if statement, then it will lock 
-				// the mutex when available.
-				
-				// Thread A could have allocated the memory, so the memory location is not null, but not constructed yet, we use the data --> Undefined Behavior.
-				// If we are not in c++ 17 we can use the std::call_once that ensures that a function is just calles once.
-				
-				
-				// Thread A and B can both return false from checking the singleton memory.
-				//singleton this_singleton;
-				//return &this_singleton;
-				
-				std::call_once(o_flag, [](){ singleton::create(); });
+            
+            //NOTE: Double check locking here, since one thread can lock the mutex, and other thread is right at the if statement, then it will lock 
+            // the mutex when available.
+            
+            // Thread A could have allocated the memory, so the memory location is not null, but not constructed yet, we use the data --> Undefined Behavior.
+            // If we are not in c++ 17 we can use the std::call_once that ensures that a function is just calles once.
+            
+            
+            // Thread A and B can both return false from checking the singleton memory.
+            //singleton this_singleton;
+            //return &this_singleton;
+            
+            std::call_once(o_flag, [](){ singleton::create(); });
 		}
 		
 		return member;
 		//return &s;
 	}
 	
-		
+    
 	u32 data = 0;
 };
 
@@ -460,11 +460,11 @@ init_singleton()
 void 
 double_checked()
 {
-	std::vector<thread_t> workers;
+	std::vector<mthread_t> workers;
 	
 	for(int i = 0; i < 30; ++i)
 	{
-		workers.push_back(thread_t(init_singleton));
+		workers.push_back(mthread_t(init_singleton));
 	}
 	
 	
@@ -577,10 +577,10 @@ void try_pickup_fork(u8 index)
 
 void philosophers_test()
 {
-	std::vector<thread_t> philosophers;
+	std::vector<mthread_t> philosophers;
 	for(int i = 0; i < philosophers_num; ++i)
 	{
-		philosophers.push_back(thread_t(try_eat, i));
+		philosophers.push_back(mthread_t(try_eat, i));
 	}
 	
 	for(auto& p: philosophers)
