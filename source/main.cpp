@@ -173,8 +173,14 @@ In this case these threads can run concurrently.
 
 
 ///DAY 10
+- std::scoped_lock, so we can avoid deadlock for example with the philosophers, example.
 
+- In this case we can lock the both A and B mutexes.
 
+std::lock() - can lock different mutexes in a single call.
+
+- using the wrapper std::unique_lock<std::mutex> ::std::defer_lock or std::adopt_lock to give it control over the mutex unlocking.
+- std::try_lock, tries to lock different mutexes, returning the lock failed index mutex or -1 if all alright.
 
 
 */

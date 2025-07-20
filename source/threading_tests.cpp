@@ -527,40 +527,31 @@ void try_eat(u8 index)
 	const char* name = philosophers[index];
 	
 	// try pickup fork
-	mutex_t* left_mutex = &fork_mutex[index];	
-	mutex_t* right_mutex = &fork_mutex[(index + 1) % forks];	
 	
-	printf("%s Thinking ... \n", name);
-	std::this_thread::sleep_for(thinking_time);
+	auto left_index = index;
+	auto right_index = (index + 1) % forks;
+	
+	mutex_t* left_mutex = &fork_mutex[left_index];	
+	
+	mutex_t* right_mutex = &fork_mutex[right_index];	
 	
 	
-	while(!left_mutex->try_lock())
+	while(std::try_lock(*right_mutex, *left_mutex) != -1)
 	{
-		printf("Fork %i still not available. %s waiting... \n", index, name);
+		printf("Forks  %i and %i still not available. %s waiting... \n", left_index, right_index, name);
 		std::this_thread::sleep_for(milliseconds(100));
 	}
 	
-	printf("%s Taking Left Fork %i  \n", name, index);
+	printf("%s Taking Lef: Forks %i and Right: %i  \n", name, left_index, right_index);
 	
 	printf("%s Thinking ... \n", name);
 	std::this_thread::sleep_for(thinking_time);
-	
-	
-	while(!right_mutex->try_lock())
-	{			
-		printf("Fork %i still no t available %s waiting... \n", index + 1, name);
-		std::this_thread::sleep_for(milliseconds(100));
-	}
-	
-	right_mutex->lock();
-	
-	printf("%s Taking Right Fork %i \n", name, index + 1);
-	
+		
 	
 	printf("Philosopher %s eating ... \n", name);	
 	std::this_thread::sleep_for(eating_time);
 	
-	printf("Philosopher %s finished eating, realising forks %i, %i thinking now ... \n", name, index, index + 1);
+	printf("Philosopher %s finished eating, realising forks %i, %i thinking now ... \n", name, left_index, right_index);
 	std::this_thread::sleep_for(thinking_time);
 	
 	right_mutex->unlock();
