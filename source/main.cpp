@@ -13,7 +13,7 @@
 int main(int num, char** args)
 {
 	mayorana_init();
-		
+    
 	//access_test();		
 	//ids_test();
 	//detach_test();
@@ -181,6 +181,15 @@ std::lock() - can lock different mutexes in a single call.
 
 - using the wrapper std::unique_lock<std::mutex> ::std::defer_lock or std::adopt_lock to give it control over the mutex unlocking.
 - std::try_lock, tries to lock different mutexes, returning the lock failed index mutex or -1 if all alright.
+
+
+//DAY 11
+
+Today was pretty interesting, since we solved the problem of the philosophers with a timed mutex and unique_lock, all contained in an infinite loop, so if a philosopher could not get both forks, we would leave the other available for the others, so, though this way, the philosophers do not have to wait to each other.
+ 
+
+using std::timed_mutex to wait for some time with unique_lock for locking the mutex, if not, then the owns_lock() will be false, and then put the thread to sleep.
+
 
 
 */

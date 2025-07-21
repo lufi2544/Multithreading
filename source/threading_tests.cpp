@@ -508,7 +508,7 @@ global bool philosopher_states[philosophers_num] =
 };
 
 // Each fork has a mutex associated, since of course a philosopher an pick up the both forks at a time.
-mutex_t fork_mutex[philosophers_num];
+std::timed_mutex fork_mutex[philosophers_num];
 
 
 const auto eating_time = seconds(1);
@@ -531,33 +531,52 @@ void try_eat(u8 index)
 	auto left_index = index;
 	auto right_index = (index + 1) % forks;
 	
-	mutex_t* left_mutex = &fork_mutex[left_index];	
+	std::timed_mutex* left_mutex = &fork_mutex[left_index];	
 	
-	mutex_t* right_mutex = &fork_mutex[right_index];	
+	std::timed_mutex* right_mutex = &fork_mutex[right_index];	
 	
-	
-	while(std::try_lock(*right_mutex, *left_mutex) != -1)
-	{
-		printf("Forks  %i and %i still not available. %s waiting... \n", left_index, right_index, name);
-		std::this_thread::sleep_for(milliseconds(100));
-	}
-	
-	printf("%s Taking Lef: Forks %i and Right: %i  \n", name, left_index, right_index);
-	
-	printf("%s Thinking ... \n", name);
-	std::this_thread::sleep_for(thinking_time);
-		
-	
-	printf("Philosopher %s eating ... \n", name);	
-	std::this_thread::sleep_for(eating_time);
-	
-	printf("Philosopher %s finished eating, realising forks %i, %i thinking now ... \n", name, left_index, right_index);
-	std::this_thread::sleep_for(thinking_time);
-	
-	right_mutex->unlock();
-	left_mutex->unlock();
-	
-	change_pilosopher_state(index, true);
+    
+    while(true)
+    {
+        
+        std::unique_lock<std::timed_mutex> lockl(*left_mutex, std::chrono::milliseconds(100));
+        
+        if(!lockl.owns_lock())
+        {
+            printf("Fork %i still not available. %s waiting... \n", left_index, name);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+        
+        printf("%s Taking left fork %i \n", name, left_index);
+        
+        printf("%s Thinking ... \n", name);
+        std::this_thread::sleep_for(thinking_time);
+        
+        std::unique_lock<std::timed_mutex> lockr(*right_mutex, std::chrono::milliseconds(100));
+        if(!lockr.owns_lock())
+        {
+            printf("%s right fork %i is not available, leaving left fork %i \n", name, right_index, left_index);
+            lockl.unlock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        else 
+        {
+            // eat
+            printf("%s taking right fork %i \n", name, right_index);
+            
+            printf("Philosopher %s eating ... \n", name);	
+            std::this_thread::sleep_for(eating_time);
+            
+            printf("Philosopher %s finished eating, realising forks %i, %i thinking now ... \n", name, left_index, right_index);
+            std::this_thread::sleep_for(thinking_time);
+            
+            
+            change_pilosopher_state(index, true);
+            break;
+        }
+        
+    }
 }
 
 void try_pickup_fork(u8 index)
