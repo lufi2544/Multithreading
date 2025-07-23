@@ -3,6 +3,7 @@
 
 #include "mayorana.h"
 #include "threading_tests.cpp"
+#include "threads_sync.cpp"
 
 
 //////////////////////////////
@@ -26,7 +27,7 @@ int main(int num, char** args)
 	print_string_test(string_1, string_2, string_3);
 */
 	
-	philosophers_test();
+	download_resource_test();
 	
 	return 0;
 }
