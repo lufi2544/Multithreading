@@ -4,6 +4,7 @@
 #include "mayorana.h"
 #include "threading_tests.cpp"
 #include "threads_sync.cpp"
+#include "win_threads.cpp"
 
 
 //////////////////////////////
@@ -11,24 +12,24 @@
 ///////
 
 
+void Work(void*)
+{
+	printf("Hello from a thread \n");
+}
+
+
 int main(int num, char** args)
 {
 	mayorana_init();
-    
-	//access_test();		
-	//ids_test();
-	//detach_test();
 	
-	/*SCRATCH();	
-	string_t string_1 = STRING_V(temp_arena, "abcdef");
-	string_t string_2 = STRING_V(temp_arena, "xyz");
-	string_t string_3 = STRING_V(temp_arena, "oooo");
+	{
+	SCRATCH();	
+	string_t name = STRING_V(temp_arena, "worker1");
+	mythread_t worker(temp_arena, name, &Work);
 	
-	print_string_test(string_1, string_2, string_3);
-*/
-	
-	download_resource_test();
-	
+	worker.join();
+	}
+    	
 	return 0;
 }
 
@@ -192,6 +193,9 @@ Today was pretty interesting, since we solved the problem of the philosophers wi
 using std::timed_mutex to wait for some time with unique_lock for locking the mutex, if not, then the owns_lock() will be false, and then put the thread to sleep.
 
 
+// DAY 13
+
+playing around with implementing the thread class myself, along with mutexes and atomics.
 
 */
 
