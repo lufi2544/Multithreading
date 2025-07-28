@@ -12,9 +12,9 @@
 ///////
 
 
-void Work(void*)
+void Work(int a)
 {
-	printf("Hello from a thread \n");
+	printf("Hello from a thread %i\n", a);
 }
 
 
@@ -22,28 +22,28 @@ int main(int num, char** args)
 {
 	mayorana_init();
 	
-	
-	SCRATCH();	
-	/*	string_t name = STRING_V(temp_arena, "worker1");
-		mythread_t worker(temp_arena, name, &Work);
-	
-		
-		worker.join();
-
-*/
-	
-	mythread_t workers [3];
-	
-	for(int i = 0; i < 3; ++i)
+	SCRATCH();		
 	{
-		string_t name = STRING_V(temp_arena, "worker");
-		mythread_t worker = mythread_t(temp_arena, name, &Work);
-		workers[i] = Move(worker);
-	}
+		THREADING_SCRATCH();	
+		mythread_t workers [3];
 		
-	for (int j = 0; j < 3; ++j)
-	{
-		workers[j].join();
+		for (int i = 0; i < 3; ++i)
+		{
+			string_t name = STRING_V(temp_arena, "worker");
+			int* data = (int*)push_size(temp_arena, sizeof(int));
+			*data = i;
+			mythread_t worker = mythread_t(threads_arena, name, 
+										   [=]()
+										   {
+											   Work(i);
+										   });
+			workers[i] = Move(worker);
+		}
+		
+		for (int j = 0; j < 3; ++j)
+		{
+			workers[j].join();
+		}
 	}
 	
 	return 0;
