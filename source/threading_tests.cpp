@@ -155,301 +155,304 @@ void task2()
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	
 	
-	while(!global_critical.try_lock())
-	{
-		printf("task2 -> could not lock, sleeping for 100ms \n");
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	/*	while(!global_critical.try_lock())
+		{
+			printf("task2 -> could not lock, sleeping for 100ms \n");
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+		
+		printf("task2 -> unlocking \n.");	
+	*/
 	}
 	
-	printf("task2 -> unlocking \n.");	
-}
-
-
-void lock_test()
-{
-	mthread_t t1(task1);
-	mthread_t t2(task2);
 	
-	t1.join();
-	t2.join();
-}
-
-
-
-
-void
-task3(string_t _value)
-{
-	for (int i = 0; i < _value.size; ++i)
+	void lock_test()
 	{
-		try
+		mthread_t t1(task1);
+		mthread_t t2(task2);
+		
+		t1.join();
+		t2.join();
+	}
+	
+	
+	
+	
+	void
+	task3(string_t _value)
+	{
+	/*		for (int i = 0; i < _value.size; ++i)
+			{
+				try
+				{
+					std::lock_guard<mutex_t> guard(global_critical.mutex());
+					u8 letter = (u8)(STRING_CONTENT(_value))[i];
+					printf("%c \n", letter);
+					printf("Waiting 100ms \n");
+					
+					throw std::runtime_error("LOL");
+					std::this_thread::sleep_for(std::chrono::milliseconds(100));
+					printf("finished --> unlocking mutex with std::guard \n");
+				}
+				catch(std::exception const& e)
+				{
+					printf("Exception --> %s \n", e.what());
+				}
+			}
+	*/
+		}
+		
+		void
+		lock_guard_test()
 		{
-			std::lock_guard<mutex_t> guard(global_critical.mutex());
+			SCRATCH();
+			
+			string_t string = STRING_V(temp_arena, "Hello");
+			
+			mthread_t t(task3, string);
+			
+			mthread_t t1(task3, string);
+			t.join();
+			t1.join();
+		}
+		
+		void
+		task4(string_t _value)
+		{
+	/*	for (int i = 0; i < _value.size; ++i)
+		{
+			
+			std::unique_lock<std::mutex> u_lock(global_critical.mutex());
 			u8 letter = (u8)(STRING_CONTENT(_value))[i];
 			printf("%c \n", letter);
+			
+			u_lock.unlock();
+			printf("finished --> unlocking mutex with std::guard \n");
 			printf("Waiting 100ms \n");
 			
-			throw std::runtime_error("LOL");
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			printf("finished --> unlocking mutex with std::guard \n");
+			printf("finished waiting \n");
+			
 		}
-		catch(std::exception const& e)
+*/
+	}
+	
+	void
+	unique_lock_test()
+	{
+		SCRATCH();
+		
+		string_t string = STRING_V(temp_arena, "Hello");	
+		
+		mthread_t t(task4, string);	
+		mthread_t t1(task4, string);
+		t.join();
+		t1.join();
+	}
+	
+	static int a = 100;
+	
+	std::timed_mutex t_mutex;
+	void 
+	task5()
+	{	
+		int locking = 2;
+		std::unique_lock<std::timed_mutex> u_lock(t_mutex, std::chrono::milliseconds(locking));
+		if(u_lock.owns_lock())
 		{
-			printf("Exception --> %s \n", e.what());
+			
+			
+			printf("locking for %i ms \n", locking);
+			a--;
+			printf("a Value: %i \n", a);
+			
+			int sleep_f = 2000;
+			printf("sleeping for %i ms \n", sleep_f);
+			std::this_thread::sleep_for(std::chrono::milliseconds(sleep_f));
+			printf("finished waiting \n");
 		}
-	}
-}
-
-void
-lock_guard_test()
-{
-	SCRATCH();
-	
-	string_t string = STRING_V(temp_arena, "Hello");
-	
-	mthread_t t(task3, string);
-	
-	mthread_t t1(task3, string);
-	t.join();
-	t1.join();
-}
-
-void
-task4(string_t _value)
-{
-	for (int i = 0; i < _value.size; ++i)
-	{
-		
-		std::unique_lock<std::mutex> u_lock(global_critical.mutex());
-		u8 letter = (u8)(STRING_CONTENT(_value))[i];
-		printf("%c \n", letter);
-		
-		u_lock.unlock();
-		printf("finished --> unlocking mutex with std::guard \n");
-		printf("Waiting 100ms \n");
-		
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		printf("finished waiting \n");
-		
-	}
-}
-
-void
-unique_lock_test()
-{
-	SCRATCH();
-	
-	string_t string = STRING_V(temp_arena, "Hello");	
-	
-	mthread_t t(task4, string);	
-	mthread_t t1(task4, string);
-	t.join();
-	t1.join();
-}
-
-static int a = 100;
-
-std::timed_mutex t_mutex;
-void 
-task5()
-{	
-	int locking = 2;
-	std::unique_lock<std::timed_mutex> u_lock(t_mutex, std::chrono::milliseconds(locking));
-	if(u_lock.owns_lock())
-	{
-		
-        
-        printf("locking for %i ms \n", locking);
-        a--;
-        printf("a Value: %i \n", a);
-        
-        int sleep_f = 2000;
-        printf("sleeping for %i ms \n", sleep_f);
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_f));
-		printf("finished waiting \n");
-	}
-	else
-	{
-		printf("not owned the lock \n");
-	}
-}
-
-void
-custom_test()
-{
-	printf("pepe1 executing \n");
-	THREAD(pepe, task5);	
-	
-	printf("pepe2 executing \n");
-	THREAD(pepe2, task5);	
-	pepe.join();	
-	
-	//std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	pepe2.join();	
-}
-
-using namespace std::chrono;
-
-std::timed_mutex this_mutex;
-
-void timeouts_1()
-{
-	printf("task 1 \n");
-	
-	printf("locking mutex \n");
-	this_mutex.lock();
-	std::this_thread::sleep_for(std::chrono::seconds(3));
-	
-	this_mutex.unlock();
-}
-
-void timeouts_2()
-{
-	printf("task 2 \n");
-	
-	auto deadline = system_clock::now() + seconds(10);
-	
-	std::unique_lock<std::timed_mutex> this_lock(this_mutex, std::defer_lock);
-	
-	if(!this_lock.try_lock_for(seconds(10)))
-	{
-		printf("mutex can not be locked yet. \n");
-	}
-	
-	printf("mutex acquired and unlocked \n");
-}
-
-void 
-timeouts_test()
-{
-	THREAD(pepe1, timeouts_1);
-	THREAD(pepe2, timeouts_2);
-	
-	
-	pepe1.join(); 
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	pepe2.join();
-	
-}
-
-#include <vector>
-critical_section_t critical_read_write;
-std::shared_mutex smutex;
-
-string_t write_read_string;
-
-void 
-task_read()
-{
-	//critical_read_write.lock();
-	std::shared_lock<std::shared_mutex> shared_section(smutex);
-	
-	printf("printing AA BB CC AA BB CC AA BB CC -> %s \n", STRING_CONTENT(write_read_string));
-	
-	std::this_thread::sleep_for(milliseconds(100));
-	//critical_read_write.unlock();
-}
-
-void
-task_write(arena_t *_arena, const char *_content)
-{
-	std::lock_guard<std::shared_mutex> guard(smutex);
-	write_read_string = STRING_V(_arena, _content);
-	
-}
-
-void
-writer_read()
-{
-	SCRATCH();
-	write_read_string = STRING_VL(temp_arena, 20, "Rome");
-	std::vector<mthread_t> workers;
-	for(int i = 0; i < 20; ++i)
-	{
-		workers.push_back(mthread_t(task_read));
-	}
-	
-	workers.push_back(mthread_t(task_write, temp_arena, "Madrid"));
-	workers.push_back(mthread_t(task_write, temp_arena, "Barcelona"));
-	
-	for(int i = 0; i < 20; ++i)
-	{
-		workers.push_back(mthread_t(task_read));
-	}
-	
-	for(auto& w: workers)
-	{
-		w.join();
-	}
-	
-}
-
-mutex_t singleton_mutex;
-std::once_flag o_flag;
-
-struct singleton
-{
-	singleton()
-	{
-		std::cout << "INIT" << std::endl;
-		std::cout << "............" << std::endl;
-		std::cout << "............" << std::endl;
-		std::cout << "............" << std::endl;
-		std::cout << "............" << std::endl;
-		std::cout << "............" << std::endl;
-		std::cout << "END" << std::endl;
-	}
-	singleton(singleton const&) = delete;
-	singleton& operator = (singleton const&) = delete;
-	
-	static singleton* member;
-	
-	
-	static void create()
-	{
-		member = new singleton();
-	}
-	
-	static singleton* get()
-	{
-		if(member == nullptr)
+		else
 		{
-			//std::unique_lock<mutex_t> lock(singleton_mutex);			
-            
-            //NOTE: Double check locking here, since one thread can lock the mutex, and other thread is right at the if statement, then it will lock 
-            // the mutex when available.
-            
-            // Thread A could have allocated the memory, so the memory location is not null, but not constructed yet, we use the data --> Undefined Behavior.
-            // If we are not in c++ 17 we can use the std::call_once that ensures that a function is just calles once.
-            
-            
-            // Thread A and B can both return false from checking the singleton memory.
-            //singleton this_singleton;
-            //return &this_singleton;
-            
-            std::call_once(o_flag, [](){ singleton::create(); });
+			printf("not owned the lock \n");
 		}
-		
-		return member;
-		//return &s;
 	}
 	
-    
-	u32 data = 0;
-};
-
-singleton* singleton::member = nullptr;
-//thread_lcoal singleton* member = nullptr; // unique per thread, not shared.
-
-
-void 
-init_singleton()
-{	
-	
-	/*if(member == nullptr)
+	void
+	custom_test()
 	{
-		member = new singleton();
-	} thread_local version. */
+		printf("pepe1 executing \n");
+		THREAD(pepe, task5);	
+		
+		printf("pepe2 executing \n");
+		THREAD(pepe2, task5);	
+		pepe.join();	
+		
+		//std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		pepe2.join();	
+	}
+	
+	using namespace std::chrono;
+	
+	std::timed_mutex this_mutex;
+	
+	void timeouts_1()
+	{
+		printf("task 1 \n");
+		
+		printf("locking mutex \n");
+		this_mutex.lock();
+		std::this_thread::sleep_for(std::chrono::seconds(3));
+		
+		this_mutex.unlock();
+	}
+	
+	void timeouts_2()
+	{
+		printf("task 2 \n");
+		
+		auto deadline = system_clock::now() + seconds(10);
+		
+		std::unique_lock<std::timed_mutex> this_lock(this_mutex, std::defer_lock);
+		
+		if(!this_lock.try_lock_for(seconds(10)))
+		{
+			printf("mutex can not be locked yet. \n");
+		}
+		
+		printf("mutex acquired and unlocked \n");
+	}
+	
+	void 
+	timeouts_test()
+	{
+		THREAD(pepe1, timeouts_1);
+		THREAD(pepe2, timeouts_2);
+		
+		
+		pepe1.join(); 
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		pepe2.join();
+		
+	}
+	
+	#include <vector>
+	critical_section_t critical_read_write;
+	std::shared_mutex smutex;
+	
+	string_t write_read_string;
+	
+	void 
+	task_read()
+	{
+		//critical_read_write.lock();
+		std::shared_lock<std::shared_mutex> shared_section(smutex);
+		
+		printf("printing AA BB CC AA BB CC AA BB CC -> %s \n", STRING_CONTENT(write_read_string));
+		
+		std::this_thread::sleep_for(milliseconds(100));
+		//critical_read_write.unlock();
+	}
+	
+	void
+	task_write(arena_t *_arena, const char *_content)
+	{
+		std::lock_guard<std::shared_mutex> guard(smutex);
+		write_read_string = STRING_V(_arena, _content);
+		
+	}
+	
+	void
+	writer_read()
+	{
+		SCRATCH();
+		write_read_string = STRING_VL(temp_arena, 20, "Rome");
+		std::vector<mthread_t> workers;
+		for(int i = 0; i < 20; ++i)
+		{
+			workers.push_back(mthread_t(task_read));
+		}
+		
+		workers.push_back(mthread_t(task_write, temp_arena, "Madrid"));
+		workers.push_back(mthread_t(task_write, temp_arena, "Barcelona"));
+		
+		for(int i = 0; i < 20; ++i)
+		{
+			workers.push_back(mthread_t(task_read));
+		}
+		
+		for(auto& w: workers)
+		{
+			w.join();
+		}
+		
+	}
+	
+	mutex_t singleton_mutex;
+	std::once_flag o_flag;
+	
+	struct singleton
+	{
+		singleton()
+		{
+			std::cout << "INIT" << std::endl;
+			std::cout << "............" << std::endl;
+			std::cout << "............" << std::endl;
+			std::cout << "............" << std::endl;
+			std::cout << "............" << std::endl;
+			std::cout << "............" << std::endl;
+			std::cout << "END" << std::endl;
+		}
+		singleton(singleton const&) = delete;
+		singleton& operator = (singleton const&) = delete;
+		
+		static singleton* member;
+		
+		
+		static void create()
+		{
+			member = new singleton();
+		}
+		
+		static singleton* get()
+		{
+			if(member == nullptr)
+			{
+				//std::unique_lock<mutex_t> lock(singleton_mutex);			
+				
+				//NOTE: Double check locking here, since one thread can lock the mutex, and other thread is right at the if statement, then it will lock 
+				// the mutex when available.
+				
+				// Thread A could have allocated the memory, so the memory location is not null, but not constructed yet, we use the data --> Undefined Behavior.
+				// If we are not in c++ 17 we can use the std::call_once that ensures that a function is just calles once.
+				
+				
+				// Thread A and B can both return false from checking the singleton memory.
+				//singleton this_singleton;
+				//return &this_singleton;
+				
+				std::call_once(o_flag, [](){ singleton::create(); });
+			}
+			
+			return member;
+			//return &s;
+		}
+		
+		
+		u32 data = 0;
+	};
+	
+	singleton* singleton::member = nullptr;
+	//thread_lcoal singleton* member = nullptr; // unique per thread, not shared.
+	
+	
+	void 
+	init_singleton()
+	{	
+		
+		/*if(member == nullptr)
+		{
+			member = new singleton();
+		} thread_local version. */
 	
 	singleton* member = singleton::get();
 	
