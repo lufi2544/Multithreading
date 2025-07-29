@@ -511,7 +511,7 @@ global bool philosopher_states[philosophers_num] =
 };
 
 // Each fork has a mutex associated, since of course a philosopher an pick up the both forks at a time.
-std::timed_mutex fork_mutex[philosophers_num];
+critical_section_t fork_mutex[philosophers_num];
 
 
 const auto eating_time = seconds(1);
@@ -534,17 +534,14 @@ void try_eat(u8 index)
 	auto left_index = index;
 	auto right_index = (index + 1) % forks;
 	
-	std::timed_mutex* left_mutex = &fork_mutex[left_index];	
+	critical_section_t* left_mutex = &fork_mutex[left_index];		
+	critical_section_t* right_mutex = &fork_mutex[right_index];	
 	
-	std::timed_mutex* right_mutex = &fork_mutex[right_index];	
-	
-    
     while(true)
-    {
+    {        
+		scoped_lock_t lockl(left_mutex);
         
-        std::unique_lock<std::timed_mutex> lockl(*left_mutex, std::chrono::milliseconds(100));
-        
-        if(!lockl.owns_lock())
+        if(!lockl.bOwnsLock)
         {
             printf("Fork %i still not available. %s waiting... \n", left_index, name);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -555,9 +552,9 @@ void try_eat(u8 index)
         
         printf("%s Thinking ... \n", name);
         std::this_thread::sleep_for(thinking_time);
-        
-        std::unique_lock<std::timed_mutex> lockr(*right_mutex, std::chrono::milliseconds(100));
-        if(!lockr.owns_lock())
+		
+        scoped_lock_t lockr(right_mutex);
+        if(!lockr.bOwnsLock)
         {
             printf("%s right fork %i is not available, leaving left fork %i \n", name, right_index, left_index);
             lockl.unlock();
@@ -574,7 +571,6 @@ void try_eat(u8 index)
             printf("Philosopher %s finished eating, realising forks %i, %i thinking now ... \n", name, left_index, right_index);
             std::this_thread::sleep_for(thinking_time);
             
-            
             change_pilosopher_state(index, true);
             break;
         }
@@ -590,10 +586,19 @@ void try_pickup_fork(u8 index)
 
 void philosophers_test()
 {
-	std::vector<mthread_t> philosophers;
+	std::vector<mythread_t> philosophers;
+	
+	SCRATCH();
 	for(int i = 0; i < philosophers_num; ++i)
 	{
-		philosophers.push_back(mthread_t(try_eat, i));
+		string_t name = STRING_V(temp_arena, "worker");
+		mythread_t t = mythread_t(temp_arena, name, 
+								  [=]()
+								  {
+									  try_eat(i);
+								  });
+		
+		philosophers.push_back(Move(t));
 	}
 	
 	for(auto& p: philosophers)

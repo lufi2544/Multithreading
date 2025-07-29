@@ -12,16 +12,22 @@
 ///////
 
 
+critical_section_t crit_this;
 void Work(int a)
-{
-	printf("Hello from a thread %i\n", a);
+{	
+	scoped_lock_t lock(&crit_this);
+	for(int i = 0; i < 10; ++i)
+	{
+		std::cout << "hello" << i << std::endl; 
+	}
+	
 }
 
 
 int main(int num, char** args)
 {
 	mayorana_init();
-	
+	/*
 	SCRATCH();		
 	{
 		THREADING_SCRATCH();	
@@ -45,6 +51,9 @@ int main(int num, char** args)
 			workers[j].join();
 		}
 	}
+	*/
+	
+	philosophers_test();
 	
 	return 0;
 }
