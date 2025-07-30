@@ -610,10 +610,13 @@ void philosophers_test()
 	{
 		bool state = philosopher_states[i];
 		printf(" Philosopher state %s \n", state ? "true" : "false");
-	}
-	
-	
+	}		
 }
+
+
+
+
+
 
 
 

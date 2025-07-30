@@ -52,8 +52,12 @@ int main(int num, char** args)
 		}
 	}
 	*/
+	SCRATCH();
+	string_t name = STRING_C(temp_arena, 30, "Hello mayorana %i \n", 77);
 	
-	philosophers_test();
+	//philosophers_test();
+	
+	printf("%s", STRING_CONTENT(name));
 	
 	return 0;
 }
