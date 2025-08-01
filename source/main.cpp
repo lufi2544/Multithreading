@@ -2,15 +2,16 @@
 #include <iostream>
 
 #include "mayorana.h"
-#include "threading_tests.cpp"
-#include "threads_sync.cpp"
-#include "win_threads.cpp"
+//#include "threading_tests.cpp"
+//#include "threads_sync.cpp"
+//#include "win_threads.cpp"
 
 
 //////////////////////////////
 // Multithreading tests
 ///////
 
+using namespace std::chrono;
 
 critical_section_t crit_this;
 void Work(int a)
@@ -23,41 +24,40 @@ void Work(int a)
 	
 }
 
+void Sum(int* res)
+{
+	int a = 0;
+	for(int i = 0; i < 1000; ++i)
+	{
+		a += i;
+	}
+	
+	*res = a;
+}
 
 int main(int num, char** args)
 {
 	mayorana_init();
-	/*
-	SCRATCH();		
-	{
-		THREADING_SCRATCH();	
-		mythread_t workers [3];
-		
-		for (int i = 0; i < 3; ++i)
-		{
-			string_t name = STRING_V(temp_arena, "worker");
-			int* data = (int*)push_size(temp_arena, sizeof(int));
-			*data = i;
-			mythread_t worker = mythread_t(threads_arena, name, 
-										   [=]()
-										   {
-											   Work(i);
-										   });
-			workers[i] = Move(worker);
-		}
-		
-		for (int j = 0; j < 3; ++j)
-		{
-			workers[j].join();
-		}
-	}
-	*/
+
 	SCRATCH();
 	string_t name = STRING_C(temp_arena, 30, "Hello mayorana %i \n", 77);
-	
-	//philosophers_test();
-	
+		
 	printf("%s", STRING_CONTENT(name));
+	
+	job_manager_t manager;
+	manager.init(temp_arena, 3, 20);
+	
+	int a = 0;
+	int b = 0;
+	int c = 0;
+	
+	manager.push_job([&](){ Sum(&a); });
+	manager.push_job([&](){ Sum(&b); });
+		
+	
+	std::this_thread::sleep_for(seconds(10));
+	printf("The sum is %i \n", a + b);
+	bJobsActive = false;
 	
 	return 0;
 }
