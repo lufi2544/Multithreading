@@ -45,7 +45,7 @@ int main(int num, char** args)
 	printf("%s", STRING_CONTENT(name));
 	
 	job_manager_t manager;
-	manager.init(temp_arena, 3, 20);
+	manager.init(temp_arena, 4, 20);
 	
 	int a = 0;
 	int b = 0;
